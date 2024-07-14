@@ -4,12 +4,18 @@ import os
 import time
 from requests.exceptions import RequestException
 
-access_token = os.getenv('IPINFO_API_KEY', 'c6c8207c9ea8c4')
+access_token = os.getenv('IPINFO_API_KEY')
 handler = ipinfo.getHandler(access_token)
 
-parser = argparse.ArgumentParser(description="Bulk IP Address to ASN lookup")
+parser = argparse.ArgumentParser(
+    description="Bulk IP Address to ASN lookup",
+    epilog="Set your IPInfo API key as an environment variable: export IPINFO_API_KEY=your_api_key",
+    formatter_class=argparse.RawDescriptionHelpFormatter
+)
+
 parser.add_argument("-l", "--list", type=str, help="Path to line-separated list of IP addresses to lookup")
 parser.add_argument("-o", "--output", type=str, help="Name of output file (txt)")
+
 args = parser.parse_args()
 
 # get and store asn details function in details dict
