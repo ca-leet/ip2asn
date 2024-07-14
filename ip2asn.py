@@ -5,6 +5,9 @@ import time
 from requests.exceptions import RequestException
 
 access_token = os.getenv('IPINFO_API_KEY')
+if not access_token:
+    access_token = input("Enter your IPInfo API key: ")
+
 handler = ipinfo.getHandler(access_token)
 
 parser = argparse.ArgumentParser(
