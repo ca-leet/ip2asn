@@ -10,6 +10,6 @@ Activate virtual environment if setup script didnt: `source ip2asn_env/bin/activ
 
 Install dependencies: `pip install -r requirements.txt`
 
-Set access token as environment variable (or supply when prompted): `export IPINFO_API_KEY=apikey_here
+Set access token as environment variable (or supply when prompted): `export IPINFO_API_KEY=apikey_here`
 
 Run! `python3 ip2asn.py -l /path/to/ips.txt -o /path/to/output.txt`
