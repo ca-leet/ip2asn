@@ -32,7 +32,6 @@ fi
 cd "$SCRIPT_DIR"
 
 python3 -m venv venv_ip2asn
-
 source venv_ip2asn/bin/activate
 
 python3 -m pip install --upgrade pip
