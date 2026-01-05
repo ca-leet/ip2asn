@@ -1,73 +1,46 @@
-import ipinfo
-import argparse
-import os
-import time
-from requests.exceptions import RequestException
+def write_csv(path, row):
+    exists = os.path.exists(path)
+    with open(path, "a", newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(f, fieldnames=CSV_HEADERS)
+        if not exists:
+            writer.writeheader()
+        writer.writerow(row)
 
-parser = argparse.ArgumentParser(
-    description="Bulk IP Address to ASN lookup",
-    epilog="Set your IPInfo API key as an environment variable: export IPINFO_API_KEY=your_api_key",
-    formatter_class=argparse.RawDescriptionHelpFormatter
-)
+def write_txt(path, row):
+    with open(path, "a", encoding="utf-8") as f:
+        for k, v in row.items():
+            f.write(f"{k:<18}: {v}\n")
+        f.write("-" * 50 + "\n")
 
-parser.add_argument("-l", "--list", type=str, help="Path to line-separated list of IP addresses to lookup")
-parser.add_argument("-o", "--output", type=str, help="Name of output file (txt)")
-
-args = parser.parse_args()
-
-access_token = os.getenv('IPINFO_API_KEY')
-if not access_token:
-    access_token = input("Enter your IPInfo API key: ")
-
-handler = ipinfo.getHandler(access_token)
-
-# get and store asn details function in details dict
-def get_asn_details(ip_address):
-    try:
-        details = handler.getDetails(ip_address)
-        return {
-            "ip address: ": ip_address,
-            "city: ": details.city,
-            "region: ": details.region,
-            "organization: ": details.org,
-        }
-    except RequestException as e:
-        return {"ip address ": ip_address, "error": str(e)}
-
-# print asn details function using details dict
-def print_asn_details(details, output_file=None):
-    output = ""
-    if isinstance(details, dict):
-        for key, value in details.items():
-            line = f"{key.capitalize()}: {value}\n"
-            output += line
-            print(line, end='')
-    else:
-        error_message = f"Error: Unbale to Process Data for: {details}"
-        output += error_message
-        print(error_message, end='')
-
-    output += '\n'
-    print()
-
-    if output_file:
-        with open(output_file, 'a') as file:
-            file.write(output)
-
-# run ip addresses through get/print_asn_details functions or take input if no list provided
 def main():
-    output_file = args.output
+    csv_file = f"{args.output}.csv"
+    txt_file = f"{args.output}.txt"
+
+    ips = []
     if args.list:
-        with open(args.list, 'r') as file:
-            ip_addresses = file.read().splitlines()
-        for ip in ip_addresses:
-            details = get_asn_details(ip)
-            print_asn_details(details, output_file)
-            time.sleep(.1)
+        with open(args.list) as f:
+            ips = [line.strip() for line in f if line.strip()]
     else:
-        ip_address = input("Enter the ip address to lookup: ")
-        details = get_asn_details(ip_address)
-        print_asn_details(details, output_file)
+        ips = [input("Enter IP address: ").strip()]
+
+    for ip in ips:
+        try:
+            row = lookup_ip(ip)
+        except RequestException as e:
+            row = {
+                "ASN": "",
+                "IP Address": ip,
+                "Owner": f"ERROR: {e}",
+                "Client/Third-Party": args.party,
+                "In Scope?": args.in_scope,
+                "Notes": args.notes,
+                "Discovered Date": datetime.now().strftime("%-m/%-d/%y"),
+                "Source": args.source,
+            }
+
+        write_csv(csv_file, row)
+        write_txt(txt_file, row)
+        time.sleep(0.1)
 
 if __name__ == "__main__":
     main()
