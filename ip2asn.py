@@ -1,3 +1,68 @@
+import ipinfo
+import argparse
+import os
+import time
+import csv
+import re
+from datetime import datetime
+from requests.exceptions import RequestException
+
+parser = argparse.ArgumentParser(
+    description="Bulk IP Address to ASN lookup (CSV + TXT output)"
+)
+
+parser.add_argument("-l", "--list", help="Line-separated list of IPs")
+parser.add_argument("-o", "--output", required=True, help="Base output name (no extension)")
+parser.add_argument("--party", default="Third-Party")
+parser.add_argument("--in-scope", default="")
+parser.add_argument("--notes", default="")
+parser.add_argument("--source", default="ipinfo")
+
+args = parser.parse_args()
+
+access_token = os.getenv("IPINFO_API_KEY") or input("Enter IPInfo API key: ")
+handler = ipinfo.getHandler(access_token)
+
+CSV_HEADERS = [
+    "ASN",
+    "IP Address",
+    "Owner",
+    "Client/Third-Party",
+    "In Scope?",
+    "Notes",
+    "Discovered Date",
+    "Source",
+]
+
+ASN_RE = re.compile(r"\bAS\d+\b")
+
+def parse_asn_and_owner(details):
+    org = getattr(details, "org", "") or ""
+    asn = ""
+
+    m = ASN_RE.search(org)
+    if m:
+        asn = m.group(0)
+
+    owner = ASN_RE.sub("", org, count=1).strip(" -–—")
+    return asn, owner
+
+def lookup_ip(ip):
+    details = handler.getDetails(ip)
+    asn, owner = parse_asn_and_owner(details)
+    date = datetime.now().strftime("%-m/%-d/%y")
+
+    return {
+        "ASN": asn,
+        "IP Address": ip,
+        "Owner": owner,
+        "Client/Third-Party": args.party,
+        "In Scope?": args.in_scope,
+        "Notes": args.notes,
+        "Discovered Date": date,
+        "Source": args.source,
+    }
+
 def write_csv(path, row):
     exists = os.path.exists(path)
     with open(path, "a", newline="", encoding="utf-8") as f:
