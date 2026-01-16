@@ -3,8 +3,8 @@
 CURRENT_DIR=$(pwd)
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
-sudo apt update || exit
-sudo apt install -y python3 python3-venv
+apt update || exit
+apt install -y python3 python3-venv
 git clone https://github.com/hyperupcall/autoenv ~/.autoenv
 
 if [[ -f ~/.zshrc ]]; then
